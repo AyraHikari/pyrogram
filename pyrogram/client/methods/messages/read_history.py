@@ -23,7 +23,7 @@ from ...ext import BaseClient
 
 
 class ReadHistory(BaseClient):
-    def read_history(
+    async def read_history(
         self,
         chat_id: Union[int, str],
         max_id: int = 0
@@ -47,7 +47,7 @@ class ReadHistory(BaseClient):
             RPCError: In case of a Telegram RPC error.
         """
 
-        peer = self.resolve_peer(chat_id)
+        peer = await self.resolve_peer(chat_id)
 
         if isinstance(peer, types.InputPeerChannel):
             q = functions.channels.ReadHistory(
@@ -60,6 +60,6 @@ class ReadHistory(BaseClient):
                 max_id=max_id
             )
 
-        self.send(q)
+        await self.send(q)
 
         return True
