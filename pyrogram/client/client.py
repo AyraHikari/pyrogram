@@ -352,14 +352,14 @@ class Client(Methods, BaseClient):
 
         for _ in range(Client.UPDATES_WORKERS):
             self.updates_worker_tasks.append(
-                asyncio.create_task(self.updates_worker())
+                asyncio.ensure_future(self.updates_worker())
             )
 
         log.info("Started {} UpdatesWorkerTasks".format(Client.UPDATES_WORKERS))
 
         for _ in range(Client.DOWNLOAD_WORKERS):
             self.download_worker_tasks.append(
-                asyncio.create_task(self.download_worker())
+                asyncio.ensure_future(self.download_worker())
             )
 
         log.info("Started {} DownloadWorkerTasks".format(Client.DOWNLOAD_WORKERS))
@@ -1031,7 +1031,7 @@ class Client(Methods, BaseClient):
                 access_hash = 0
                 peer_type = "group"
             elif isinstance(peer, (types.Channel, types.ChannelForbidden)):
-                peer_id = int("-100" + str(peer.id))
+                peer_id = utils.get_channel_id(peer.id)
                 access_hash = peer.access_hash
 
                 username = getattr(peer, "username", None)
@@ -1139,7 +1139,7 @@ class Client(Methods, BaseClient):
                                 try:
                                     diff = await self.send(
                                         functions.updates.GetChannelDifference(
-                                            channel=await self.resolve_peer(int("-100" + str(channel_id))),
+                                            channel=await self.resolve_peer(utils.get_channel_id(channel_id)),
                                             filter=types.ChannelMessagesFilter(
                                                 ranges=[types.MessageRange(
                                                     min_id=update.message.id,
@@ -1527,33 +1527,38 @@ class Client(Methods, BaseClient):
                     except KeyError:
                         raise PeerIdInvalid
 
-            if peer_id > 0:
+            peer_type = utils.get_type(peer_id)
+
+            if peer_type == "user":
                 self.fetch_peers(
                     await self.send(
                         functions.users.GetUsers(
-                            id=[types.InputUser(
-                                user_id=peer_id,
-                                access_hash=0
-                            )]
+                            id=[
+                                types.InputUser(
+                                    user_id=peer_id,
+                                    access_hash=0
+                                )
+                            ]
                         )
                     )
                 )
+            elif peer_type == "chat":
+                await self.send(
+                    functions.messages.GetChats(
+                        id=[-peer_id]
+                    )
+                )
             else:
-                if str(peer_id).startswith("-100"):
-                    await self.send(
-                        functions.channels.GetChannels(
-                            id=[types.InputChannel(
-                                channel_id=int(str(peer_id)[4:]),
+                await self.send(
+                    functions.channels.GetChannels(
+                        id=[
+                            types.InputChannel(
+                                channel_id=utils.get_channel_id(peer_id),
                                 access_hash=0
-                            )]
-                        )
+                            )
+                        ]
                     )
-                else:
-                    await self.send(
-                        functions.messages.GetChats(
-                            id=[-peer_id]
-                        )
-                    )
+                )
 
             try:
                 return self.storage.get_peer_by_id(peer_id)
@@ -1623,7 +1628,7 @@ class Client(Methods, BaseClient):
                     return
 
                 try:
-                    await asyncio.create_task(session.send(data))
+                    await asyncio.ensure_future(session.send(data))
                 except Exception as e:
                     log.error(e)
 
@@ -1644,7 +1649,7 @@ class Client(Methods, BaseClient):
         file_id = file_id or self.rnd_id()
         md5_sum = md5() if not is_big and not is_missing_part else None
         pool = [Session(self, self.storage.dc_id, self.storage.auth_key, is_media=True) for _ in range(pool_size)]
-        workers = [asyncio.create_task(worker(session)) for session in pool for _ in range(workers_count)]
+        workers = [asyncio.ensure_future(worker(session)) for session in pool for _ in range(workers_count)]
         queue = asyncio.Queue(16)
 
         try:

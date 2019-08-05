@@ -98,7 +98,7 @@ class Dispatcher:
             self.locks_list.append(asyncio.Lock())
 
             self.update_worker_tasks.append(
-                asyncio.create_task(self.update_worker(self.locks_list[-1]))
+                asyncio.ensure_future(self.update_worker(self.locks_list[-1]))
             )
 
         log.info("Started {} UpdateWorkerTasks".format(self.workers))
@@ -130,7 +130,7 @@ class Dispatcher:
                 for lock in self.locks_list:
                     lock.release()
 
-        asyncio.get_event_loop().create_task(fn())
+        asyncio.ensure_future(fn())
 
     def remove_handler(self, handler, group: int):
         async def fn():
@@ -146,7 +146,7 @@ class Dispatcher:
                 for lock in self.locks_list:
                     lock.release()
 
-        asyncio.get_event_loop().create_task(fn())
+        asyncio.ensure_future(fn())
 
     async def update_worker(self, lock):
         while True:
@@ -171,8 +171,13 @@ class Dispatcher:
                             args = None
 
                             if isinstance(handler, handler_type):
-                                if handler.check(parsed_update):
-                                    args = (parsed_update,)
+                                try:
+                                    if handler.check(parsed_update):
+                                        args = (parsed_update,)
+                                except Exception as e:
+                                    log.error(e, exc_info=True)
+                                    continue
+
                             elif isinstance(handler, RawUpdateHandler):
                                 args = (update, users, chats)
 
