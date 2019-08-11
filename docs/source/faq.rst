@@ -250,8 +250,8 @@ The error in question is ``[400 PEER_ID_INVALID]``, and could mean several thing
 
 About the last point: in order for you to meet a user and thus communicate with them, you should ask yourself how to
 contact people using official apps. The answer is the same for Pyrogram too and involves normal usages such as searching
-for usernames, meet them in a common group, have their phone contacts saved, getting a message mentioning them (either a
-forward or a mention in the message text).
+for usernames, meeting them in a common group, have their phone contacts saved or getting a message mentioning them,
+either a forward or a mention in the message text.
 
 UnicodeEncodeError: '<encoding>' codec can't encode …
 -----------------------------------------------------
@@ -268,6 +268,23 @@ When uploading media files using an URL, the server automatically tries to downl
 Telegram cloud. This error usually happens in case the provided URL is not publicly accessible by Telegram itself or the
 media exceeds 20 MB in size. In such cases, your only option is to download the media yourself and upload from your
 local machine.
+
+sqlite3.OperationalError: database is locked
+--------------------------------------------
+
+This error occurs when more than one process is using the same session file, that is, when you run two or more clients
+at the same time using the same session name.
+
+It could also occur when a background script is still running and you forgot about it. In this case, you either restart
+your system or find and kill the process that is locking the database. On Unix based systems, you can do the following:
+
+#. ``cd`` into your session file directory.
+#. ``fuser my_account.session`` to find the process id.
+#. ``kill 1234`` to gracefully stop the process.
+#. If the last command doesn't help, use ``kill -9 1234`` instead.
+
+If you want to run multiple clients on the same account, you must authorize your account (either user or bot)
+from the beginning every time, and use different session names for each parallel client you are going to use.
 
 My verification code expires immediately!
 -----------------------------------------

@@ -110,6 +110,7 @@ class Client(Methods, BaseClient):
         bot_token (``str``, *optional*):
             Pass your Bot API token to create a bot session, e.g.: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
             Only applicable for new sessions.
+            This is an alternative way to set it if you don't want to use the *config.ini* file.
 
         phone_number (``str`` | ``callable``, *optional*):
             Pass your phone number as string (with your Country Code prefix included) to avoid entering it manually.
@@ -153,7 +154,7 @@ class Client(Methods, BaseClient):
 
         workdir (``str``, *optional*):
             Define a custom working directory. The working directory is the location in your filesystem
-            where Pyrogram will store your session files. Defaults to "." (current directory).
+            where Pyrogram will store your session files. Defaults to the parent directory of the main script.
 
         config_file (``str``, *optional*):
             Path of the configuration file. Defaults to ./config.ini
@@ -1237,6 +1238,11 @@ class Client(Methods, BaseClient):
     def load_config(self):
         parser = ConfigParser()
         parser.read(str(self.config_file))
+        
+        if self.bot_token:
+            pass
+        else:
+            self.bot_token = parser.get("pyrogram", "bot_token", fallback=None)
 
         if self.api_id and self.api_hash:
             pass
