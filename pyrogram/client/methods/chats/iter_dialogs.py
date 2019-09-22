@@ -18,9 +18,9 @@
 
 from typing import Generator, Optional
 
-import pyrogram
 from async_generator import async_generator, yield_
 
+import pyrogram
 from ...ext import BaseClient
 
 
@@ -29,7 +29,7 @@ class IterDialogs(BaseClient):
     async def iter_dialogs(
         self,
         limit: int = 0,
-        offset_date: int = None
+        offset_date: int = 0
     ) -> Optional[Generator["pyrogram.Dialog", None, None]]:
         """Iterate through a user's dialogs sequentially.
 
@@ -38,7 +38,7 @@ class IterDialogs(BaseClient):
         single call.
 
         Parameters:
-            limit (``str``, *optional*):
+            limit (``int``, *optional*):
                 Limits the number of dialogs to be retrieved.
                 By default, no limit is applied and all dialogs are returned.
 

@@ -22,11 +22,10 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 from io import BytesIO
 
-from pyrogram.api.all import layer
-
 import pyrogram
 from pyrogram import __copyright__, __license__, __version__
 from pyrogram.api import functions, types
+from pyrogram.api.all import layer
 from pyrogram.api.core import TLObject, MsgContainer, Int, Long, FutureSalt, FutureSalts
 from pyrogram.connection import Connection
 from pyrogram.crypto import MTProto
@@ -115,7 +114,7 @@ class Session:
         while True:
             self.connection = Connection(
                 self.dc_id,
-                self.client.storage.test_mode,
+                self.client.storage.test_mode(),
                 self.client.ipv6,
                 self.client.proxy
             )
@@ -217,7 +216,7 @@ class Session:
         await self.start()
 
     async def net_worker(self):
-        log.info("NetWorkerTask started")
+        logging.info("NetWorkerTask started")
 
         while True:
             packet = await self.recv_queue.get()
@@ -385,8 +384,8 @@ class Session:
                 await asyncio.wait_for(self.results[msg_id].event.wait(), timeout)
             except asyncio.TimeoutError:
                 pass
-
-            result = self.results.pop(msg_id).value
+            finally:
+                result = self.results.pop(msg_id).value
 
             if result is None:
                 raise TimeoutError
@@ -413,9 +412,9 @@ class Session:
                 raise e from None
 
             (log.warning if retries < 2 else log.info)(
-                "{}: {} Retrying {}".format(
+                "[{}] Retrying {} due to {}".format(
                     Session.MAX_RETRIES - retries + 1,
-                    datetime.now(), type(data)))
+                    data.QUALNAME, e))
 
             await asyncio.sleep(0.5)
             return await self.send(data, retries - 1, timeout)
