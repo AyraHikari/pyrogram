@@ -1392,7 +1392,7 @@ class Client(Methods, BaseClient):
     def load_config(self):
         parser = ConfigParser()
         parser.read(str(self.config_file))
-        
+
         if self.bot_token:
             pass
         else:
@@ -1473,13 +1473,8 @@ class Client(Methods, BaseClient):
         ])
 
         if session_empty:
-<<<<<<< HEAD
-            self.storage.dc_id = 2
-            self.storage.date = 0
-=======
             self.storage.dc_id(2)
             self.storage.date(0)
->>>>>>> update/asyncio-dev
 
             self.storage.test_mode(self.test_mode)
             self.storage.auth_key(await Auth(self, self.storage.dc_id()).create())
@@ -1903,33 +1898,6 @@ class Client(Methods, BaseClient):
             session = self.media_sessions.get(dc_id, None)
 
             if session is None:
-<<<<<<< HEAD
-                if dc_id != self.storage.dc_id:
-                    exported_auth = await self.send(
-                        functions.auth.ExportAuthorization(
-                            dc_id=dc_id
-                        )
-                    )
-
-                    session = Session(
-                        self,
-                        dc_id,
-                        await Auth(self, dc_id).create(), is_media=True)
-
-                    await session.start()
-
-                    self.media_sessions[dc_id] = session
-
-                    await session.send(
-                        functions.auth.ImportAuthorization(
-                            id=exported_auth.id,
-                            bytes=exported_auth.bytes
-                        )
-                    )
-                else:
-                    session = Session(self, dc_id, self.storage.auth_key, is_media=True)
-
-=======
                 if dc_id != self.storage.dc_id():
                     session = Session(self, dc_id, await Auth(self, dc_id).create(), is_media=True)
                     await session.start()
@@ -1957,10 +1925,9 @@ class Client(Methods, BaseClient):
                         raise AuthBytesInvalid
                 else:
                     session = Session(self, dc_id, self.storage.auth_key(), is_media=True)
->>>>>>> update/asyncio-dev
                     await session.start()
 
-                    self.media_sessions[dc_id] = session
+                self.media_sessions[dc_id] = session
 
         file_ref = utils.decode_file_ref(file_ref)
 
